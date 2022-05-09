@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class LevelEditor : MonoBehaviour
 {
@@ -22,6 +24,14 @@ public class LevelEditor : MonoBehaviour
     bool placingLava = false;
     bool placingGoal = false;
     bool placingJumpPad = false;
+    bool aiRun = false;
+    bool playerRun = false;
+    public Button playerRunButton;
+    public Button aiRunButton;
+    public Button placingGoalButton;
+    public Button rerunButton;
+    public GameObject warnText;
+    bool disableGButton = true;
 
     private void Start()
     {
@@ -64,6 +74,15 @@ public class LevelEditor : MonoBehaviour
             {
                 levelSpawner.SpawnGoal();
             }
+        }
+        if (GameObject.FindGameObjectsWithTag("Goal").Length == 1 && disableGButton)
+        {
+            placingGoal = false;
+            placingGoalButton.interactable = false;
+        }
+        if (GameObject.FindGameObjectsWithTag("Goal").Length == 0 && placingGoalButton.interactable == false)
+        {
+            placingGoalButton.interactable = true;
         }
         /*
         if (placingJumpPad) 
@@ -161,6 +180,8 @@ public class LevelEditor : MonoBehaviour
         placingPlatform = false;
         placingLava = true;
         placingGoal = false;
+
+        
     }
 
     public void ButtonPlaceGoal() 
@@ -168,7 +189,11 @@ public class LevelEditor : MonoBehaviour
         placingPlatform = false;
         placingGoal = true;
         placingLava = false;
+
+        
     }
+
+
     /*
     public void ButtonPlacingJumpPad() 
     {
@@ -180,15 +205,87 @@ public class LevelEditor : MonoBehaviour
     */
     public void ButtonPlayerRun() 
     {
+
         //activate gameobject that holds start pos, as player is spawned on doing so
+        rerunButton.interactable = true;
+        aiRunButton.interactable = true;
+        playerRunButton.interactable = false;
         startPosDecoy.SetActive(false);
         startPosPlayer.SetActive(true);
+        startPosAI.SetActive(false);
+        FindObjectOfType<StartPointBehavior>().Spawn();
+        aiRun = false;
+        playerRun = true;
     }
 
     public void ButtonAIRun() 
     {
-        startPosDecoy.SetActive(false);
-        startPosAI.SetActive(true);
+        if (GameObject.FindGameObjectWithTag("Goal"))
+        {
+            FindObjectOfType<FollowObject>().ResetPos();
+            rerunButton.interactable = true;
+            aiRunButton.interactable = false;
+            playerRunButton.interactable = true;
+            if (FindObjectOfType<PlayerController>()!= null)
+            {
+                Destroy(FindObjectOfType<PlayerController>().gameObject);
+            }
+            startPosDecoy.SetActive(false);
+            startPosAI.SetActive(true);
+            aiRun = true;
+            playerRun = false;
+
+        }
+        else
+        {
+            warnText.SetActive(true);
+            Invoke("HideWarnMessage", 2);
+        }
         
+    }
+    void HideWarnMessage()
+    {
+        warnText.SetActive(false);
+    }
+
+    public void RerunButton()
+    {
+        if (playerRun)
+        {
+            FindObjectOfType<PlayerController>().Die();
+        }
+        else if (aiRun)
+        {
+            FindObjectOfType<PAgent>().Die();
+        }
+    }
+
+    public void ResetButton()
+    {
+        disableGButton = false;
+        FindObjectOfType<FollowObject>().ResetPos();
+        foreach (var w in GameObject.FindGameObjectsWithTag("Walkable"))
+        {
+            Destroy(w);
+        }
+        foreach (var l in GameObject.FindGameObjectsWithTag("Lava"))
+        {
+            Destroy(l);
+        }
+        if (FindObjectOfType<PlayerController>() != null)
+        {
+            Destroy(FindObjectOfType<PlayerController>().gameObject);
+        }
+        startPosAI.SetActive(false);
+        if (GameObject.FindGameObjectWithTag("Goal") != null)
+        {
+            Destroy(GameObject.FindGameObjectWithTag("Goal"));
+        }
+        aiRunButton.interactable = true;
+        playerRunButton.interactable = true;
+        rerunButton.interactable = false;
+        startPosDecoy.SetActive(true);
+        placingGoalButton.interactable = true;
+        disableGButton = true;
     }
 }

@@ -31,6 +31,8 @@ public class PAgent : Agent
     private List<GameObject> lavas;
     private int winCount;
     public bool continous = false;
+    private List<GameObject> tiles;
+    
     private void Start()
     {
         if (!trainingMode)
@@ -38,7 +40,16 @@ public class PAgent : Agent
             startPoint = GameObject.FindGameObjectWithTag("StartPosition").transform;
             destPoint = GameObject.FindGameObjectWithTag("Goal").transform;
             rigidbody = this.GetComponent<Rigidbody2D>();
-
+            lavas = new List<GameObject>();
+            tiles = new List<GameObject>();
+            foreach (var w in GameObject.FindGameObjectsWithTag("Walkable"))
+            {
+                tiles.Add(w);
+            }
+            foreach (var l in GameObject.FindGameObjectsWithTag("Lava"))
+            {
+                lavas.Add(l);
+            }
 
         }
 
@@ -49,10 +60,38 @@ public class PAgent : Agent
         {
             startPoint = GameObject.FindGameObjectsWithTag("StartPosition").ToList().Find(x => x.transform.parent == this.transform.parent).transform;
             destPoint = GameObject.FindGameObjectsWithTag("Goal").ToList().Find(x => x.transform.parent == this.transform.parent).transform;
-
+            tiles = new List<GameObject>();
+            foreach (var w in GameObject.FindGameObjectsWithTag("Walkable"))
+            {
+                if (w.transform.parent == this.transform.parent)
+                {
+                    tiles.Add(w);
+                }
+            }
+            if (lavas.Count == 0)
+            {
+                lavas = new List<GameObject>();
+                foreach (var l in GameObject.FindGameObjectsWithTag("Lava"))
+                {
+                    if (l.transform.parent == this.transform.parent)
+                    {
+                        lavas.Add(l);
+                    }
+                }
+            }
         }
         else
         {
+            tiles = new List<GameObject>();
+            foreach (var w in GameObject.FindGameObjectsWithTag("Walkable"))
+            {
+                tiles.Add(w);
+            }
+            lavas = new List<GameObject>();
+            foreach(var l in GameObject.FindGameObjectsWithTag("Lava"))
+            {
+                lavas.Add(l);
+            }
             MaxStep = 0;
         }
         rigidbody = this.GetComponent<Rigidbody2D>();
@@ -123,31 +162,68 @@ public class PAgent : Agent
 
         //sensor.AddObservation((Vector2)this.transform.position);
         sensor.AddObservation(Vector2.Distance(this.transform.position, destPoint.position));
+
+
+        var tmpTiles = new List<GameObject>();
+        var tmpLavas = new List<GameObject>();
+
+        foreach(var l in lavas)
+        {
+            if (Vector2.Dot(this.transform.right, (l.transform.position - this.transform.position).normalized) > 0)
+            {
+                tmpLavas.Add(l);
+            }
+        }
+        foreach(var t in tiles)
+        {
+            if (Vector2.Dot(this.transform.right, (t.transform.position - this.transform.position).normalized) > 0)
+            {
+                tmpTiles.Add(t);
+            }
+        }
+        var tileOrd = tmpTiles.OrderByDescending(x => Vector2.Distance(this.transform.position, x.transform.position));
+        var lavaOrd = tmpLavas.OrderByDescending(x => Vector2.Distance(this.transform.position, x.transform.position));
+
+        //sensor.AddObservation((Vector2)tmpTiles.ToList()[0].transform.position);
+        //sensor.AddObservation((Vector2)tmpLavas.ToList()[0].transform.position);
+        //sensor.AddObservation(Vector2.Distance(this.transform.position, tmpTiles.ToList()[0].transform.position));
+        //sensor.AddObservation(Vector2.Distance(this.transform.position, tmpLavas.ToList()[0].transform.position));
+
+        foreach (var t in tileOrd)
+        {
+            sensor.AddObservation((Vector2)t.transform.position);
+            sensor.AddObservation(Vector2.Distance(this.transform.position, t.transform.position));
+        }
+        foreach (var l in lavaOrd)
+        {
+            sensor.AddObservation((Vector2)l.transform.position);
+            sensor.AddObservation(Vector2.Distance(this.transform.position, l.transform.position));
+        }
         //foreach (var w in GameObject.FindGameObjectsWithTag("Walkable"))
         //{
         //    if (w.transform.parent == this.transform.parent)
         //        sensor.AddObservation((Vector2)w.transform.position);
         //}
+        
+        //foreach (var l in GameObject.FindGameObjectsWithTag("Lava"))
+        //{
+        //    if (trainingMode)
+        //    {
+        //        if (l.transform.parent == this.transform.parent)
+        //        {
+        //            sensor.AddObservation((Vector2)l.transform.position);
+        //            sensor.AddObservation(Vector2.Dot(this.transform.right, (l.transform.position - this.transform.position).normalized));
+        //            sensor.AddObservation(Vector2.Distance(this.transform.position, l.transform.position));
+        //        }
 
-        foreach (var l in GameObject.FindGameObjectsWithTag("Lava"))
-        {
-            if (trainingMode)
-            {
-                if (l.transform.parent == this.transform.parent)
-                {
-                    sensor.AddObservation((Vector2)l.transform.position);
-                    sensor.AddObservation(Vector2.Dot(this.transform.right, (l.transform.position - this.transform.position).normalized));
-                    sensor.AddObservation(Vector2.Distance(this.transform.position, l.transform.position));
-                }
-
-            }
-            else
-            {
-                sensor.AddObservation((Vector2)l.transform.position);
-                sensor.AddObservation(Vector2.Dot(this.transform.right, (l.transform.position - this.transform.position).normalized));
-                sensor.AddObservation(Vector2.Distance(this.transform.position, l.transform.position));
-            }
-        }
+        //    }
+        //    else
+        //    {
+        //        sensor.AddObservation((Vector2)l.transform.position);
+        //        sensor.AddObservation(Vector2.Dot(this.transform.right, (l.transform.position - this.transform.position).normalized));
+        //        sensor.AddObservation(Vector2.Distance(this.transform.position, l.transform.position));
+        //    }
+        //}
 
         //foreach (var h in GameObject.FindGameObjectsWithTag("Hole"))
         //{
@@ -155,7 +231,7 @@ public class PAgent : Agent
         //        sensor.AddObservation((Vector2)h.transform.position);
         //}
         sensor.AddObservation((Vector2)destPoint.transform.position);
-
+        
         sensor.AddObservation(isGrounded);
     }
 

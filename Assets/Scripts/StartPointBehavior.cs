@@ -10,10 +10,16 @@ public class StartPointBehavior : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        
+    }
+
+    public void Spawn()
+    {
         if (!trainingMode)
         {
             Instantiate(player);
             player.GetComponent<PlayerController>().startPos = this.gameObject;
+            player.transform.position = this.transform.position;
 
         }
     }

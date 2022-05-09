@@ -8,11 +8,14 @@ public class FollowObject : MonoBehaviour
     public float yValue;
 
     float initialZValue;
-
+    float initialXValue;
+    Vector3 originalPos;
     // Start is called before the first frame update
     void Start()
     {
+        originalPos = this.transform.position;
         initialZValue = transform.position.z;
+        initialXValue = transform.position.x;
     }
 
     // Update is called once per frame
@@ -22,5 +25,11 @@ public class FollowObject : MonoBehaviour
         {
             transform.position = new Vector3(toFollow.position.x, yValue, initialZValue);
         }
+    }
+
+    public void ResetPos()
+    {
+        toFollow = null;
+        transform.position = originalPos;
     }
 }

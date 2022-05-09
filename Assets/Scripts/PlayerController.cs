@@ -21,7 +21,6 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        transform.position = startPos.transform.position;
         Camera.main.GetComponent<FollowObject>().toFollow = this.transform;
     }
 
@@ -75,7 +74,7 @@ public class PlayerController : MonoBehaviour
             Win();
         }
     }
-    void Die()
+    public void Die()
     {
         transform.position = startPos.transform.position;
     }
